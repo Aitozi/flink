@@ -339,7 +339,6 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 
 				// drop if the window is already late
 				if (isWindowLate(actualWindow)) {
-					this.lostDataCount.inc();
 					mergingWindows.retireWindow(actualWindow);
 					continue;
 				}
@@ -379,7 +378,6 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 
 				// drop if the window is already late
 				if (isWindowLate(window)) {
-					this.lostDataCount.inc();
 					continue;
 				}
 				isSkippedElement = false;
@@ -413,6 +411,8 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 		// windowAssigner is event time and current timestamp + allowed lateness no less than element timestamp
 		if (isSkippedElement && lateDataOutputTag != null && isElementLate(element)) {
 			sideOutput(element);
+		}else if (isSkippedElement){
+			this.lostDataCount.inc();
 		}
 	}
 
