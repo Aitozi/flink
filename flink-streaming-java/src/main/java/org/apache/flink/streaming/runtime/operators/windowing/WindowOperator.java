@@ -411,7 +411,7 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 		// windowAssigner is event time and current timestamp + allowed lateness no less than element timestamp
 		if (isSkippedElement && lateDataOutputTag != null && isElementLate(element)) {
 			sideOutput(element);
-		}else if (isSkippedElement){
+		} else if (isSkippedElement){
 			this.lostDataCount.inc();
 		}
 	}
