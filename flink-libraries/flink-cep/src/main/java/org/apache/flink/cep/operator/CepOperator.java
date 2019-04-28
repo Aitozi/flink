@@ -46,6 +46,7 @@ import org.apache.flink.runtime.state.KeyedStateFunction;
 import org.apache.flink.runtime.state.StateInitializationContext;
 import org.apache.flink.runtime.state.VoidNamespace;
 import org.apache.flink.runtime.state.VoidNamespaceSerializer;
+import org.apache.flink.runtime.state.heap.HeapKeyedStateBackend;
 import org.apache.flink.streaming.api.graph.StreamConfig;
 import org.apache.flink.streaming.api.operators.AbstractUdfStreamOperator;
 import org.apache.flink.streaming.api.operators.InternalTimer;
@@ -292,7 +293,7 @@ public class CepOperator<IN, KEY, OUT>
 			elementsForTimestamp = new ArrayList<>();
 		}
 
-		if (getExecutionConfig().isObjectReuseEnabled()) {
+		if (getExecutionConfig().isObjectReuseEnabled() && getKeyedStateBackend() instanceof HeapKeyedStateBackend) {
 			// copy the StreamRecord so that it cannot be changed
 			elementsForTimestamp.add(inputSerializer.copy(event));
 		} else {
