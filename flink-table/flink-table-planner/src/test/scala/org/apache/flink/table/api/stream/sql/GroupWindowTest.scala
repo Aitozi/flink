@@ -20,7 +20,7 @@ package org.apache.flink.table.api.stream.sql
 
 import org.apache.flink.api.scala._
 import org.apache.flink.table.api.scala._
-import org.apache.flink.table.runtime.utils.JavaUserDefinedAggFunctions.WeightedAvgWithMerge
+import org.apache.flink.table.runtime.utils.JavaUserDefinedAggFunctions.{FilterUDF, WeightedAvgWithMerge}
 import org.apache.flink.table.utils.TableTestUtil._
 import org.apache.flink.table.utils.{StreamTableTestUtil, TableTestBase}
 import org.junit.Test
@@ -30,9 +30,25 @@ class GroupWindowTest extends TableTestBase {
   private val table = streamUtil.addTable[(Int, String, Long)](
     "MyTable", 'a, 'b, 'c, 'proctime.proctime, 'rowtime.rowtime)
 
+
+  @Test
+  def testWindowWithFilter() = {
+    streamUtil.tableEnv.registerFunction("filterUdf", new FilterUDF)
+    val sql =
+      """
+        |SELECT c, s from (
+        |SELECT COUNT(*) AS c, TUNBLE_START(rowtime, INTERVAL '15' MINUTE) as s FROM MyTable
+        |GROUP BY TUMBLE(rowtime, INTERVAL '15' MINUTE))
+        | where filterUdf(b) != true
+        |""".stripMargin
+
+    streamUtil.verifyJavaSql(sql, "")
+  }
+
   @Test
   def testTumbleFunction() = {
     streamUtil.tableEnv.registerFunction("weightedAvg", new WeightedAvgWithMerge)
+    streamUtil.tableEnv.registerFunction("filterUdf", new FilterUDF)
 
     val sql =
       "SELECT " +
@@ -40,7 +56,7 @@ class GroupWindowTest extends TableTestBase {
         "  TUMBLE_START(rowtime, INTERVAL '15' MINUTE), " +
         "  TUMBLE_END(rowtime, INTERVAL '15' MINUTE)" +
         "FROM MyTable " +
-        "GROUP BY TUMBLE(rowtime, INTERVAL '15' MINUTE)"
+        "GROUP BY TUMBLE(rowtime, INTERVAL '15' MINUTE) where filterUdf(b) != true"
     val expected =
       unaryNode(
         "DataStreamCalc",

@@ -23,6 +23,8 @@ import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.table.api.dataview.ListView;
 import org.apache.flink.table.api.dataview.MapView;
 import org.apache.flink.table.functions.AggregateFunction;
+import org.apache.flink.table.functions.ScalarFunction;
+import org.apache.flink.table.functions.UserDefinedFunction;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -103,6 +105,13 @@ public class JavaUserDefinedAggFunctions {
 		public void accumulate(WeightedAvgAccum accumulator, int iValue, int iWeight) {
 			accumulator.sum += iValue * iWeight;
 			accumulator.count += iWeight;
+		}
+	}
+
+	public static class FilterUDF extends ScalarFunction {
+
+		public boolean eval(String s) {
+			return false;
 		}
 	}
 
