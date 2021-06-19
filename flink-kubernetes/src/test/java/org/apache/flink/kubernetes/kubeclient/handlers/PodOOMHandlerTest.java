@@ -41,6 +41,7 @@ public class PodOOMHandlerTest {
                 new PodOOMHandler(
                         UnregisteredMetricGroups.createUnregisteredResourceManagerMetricGroup());
 
+        String finishTime = "2020-03-19T13:14:48Z";
         KubernetesPod kubernetesPod =
                 new KubernetesPod(
                         new PodBuilder()
@@ -60,7 +61,7 @@ public class PodOOMHandlerTest {
                                                                             new ContainerStateBuilder()
                                                                                     .withNewTerminated()
                                                                                     .withFinishedAt(
-                                                                                            "2020-10-19T13:14:48Z")
+                                                                                            finishTime)
                                                                                     .withReason(
                                                                                             "OOMKilled")
                                                                                     .endTerminated()
@@ -71,14 +72,13 @@ public class PodOOMHandlerTest {
                                 .build());
         podOOMHandler.handle(kubernetesPod);
         Assert.assertEquals(1, podOOMHandler.getTombstones().size());
-        Assert.assertTrue(
-                podOOMHandler
-                        .getTombstones()
-                        .getIfPresent("2020-10-19T13:14:48Z")
-                        .contains("pod-1"));
+        Assert.assertTrue(podOOMHandler.getTombstones().getIfPresent(finishTime).contains("pod-1"));
         // test ignore same events
         podOOMHandler.handle(kubernetesPod);
-        Assert.assertEquals(
-                1, podOOMHandler.getTombstones().getIfPresent("2020-10-19T13:14:48Z").size());
+        Assert.assertEquals(1, podOOMHandler.getTombstones().getIfPresent(finishTime).size());
+
+        kubernetesPod.getInternalResource().getMetadata().setName("pod-2");
+        podOOMHandler.handle(kubernetesPod);
+        Assert.assertEquals(2, podOOMHandler.getTombstones().getIfPresent(finishTime).size());
     }
 }
